@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>View Interview Stories | HireStory</title>
+  <link rel="stylesheet" href="assets/css/view.css" />
+</head>
+<body>
+  <header>
+    <h1>Interview Stories</h1>
+    <p>Read real experiences from real people.</p>
+  </header>
+
+  <!-- Filter Section -->
+  <section class="filters">
+    <input type="text" id="searchInput" placeholder="Search by company or role..." />
+
+    <select id="companyFilter">
+      
+      <option value="All">All Companies</option>
+      <option value="google">Google</option>
+      <option value="microsoft">Microsoft</option>
+      <option value="cisco">Cisco</option>  
+      <option value="amazon">Amazon</option>
+      <option value="adobe">Abode</option>
+      <option value="filpkart">Filpkart</option>
+      <option value="ibm">Filpkart</option>
+      <option value="apple">Apple</option>
+      <option value="oracle">Oracle</option>
+      <option value="tcs">TCS</option>
+      <option value="infosys">Infosys</option>
+      <option value="cognizant">cognizant</option>
+      <option value="accenture">Accenture</option>
+      
+    </select>
+
+    <select id="roleFilter">
+      <option value="All">All Roles</option>
+      <option value="sde">SDE</option>
+      <option value="sde intern">SDE intern</option>
+      <option value="data analyst">Data Analyst</option>
+      <option value="ai engineer">AI Engineer</option>
+      <option value="aiml intern">AIML intern</option>
+    </select>
+
+    <select id="difficultyFilter">
+      <option value="All">All Difficulties</option>
+      <option value="Easy">Easy</option>
+      <option value="Medium">Medium</option>
+      <option value="Hard">Hard</option>
+    </select>
+  </section>
+
+  <!-- Posts Container -->
+  <section id="postsContainer"></section>
+
+  <footer>
+    <p>&copy; 2025 HireStory. Made with ❤️ by Mohisina.</p>
+  </footer>
+
+  <script src="assets/js/view.js"></script>
+</body>
+</html>

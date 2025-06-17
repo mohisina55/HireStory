@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register | HireStory</title>
+  <link rel="stylesheet" href="assets/css/register.css" />
+</head>
+<body>
+  <div class="register-container">
+    <h2>Create Your Account</h2>
+    <form id="registerForm">
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Password" required />
+      
+      <select id="role" required>
+        <option value="">Select Role</option>
+        <option value="Student">Student</option>
+        <option value="Professional">Professional</option>
+        <option value="Recruiter">Recruiter</option>
+      </select>
+
+      <button type="submit">Register</button>
+      <p class="login-link">
+        Already have an account? <a href="login.html">Login here</a>
+      </p>
+      <div id="message"></div>
+    </form>
+  </div>
+
+  <script src="assets/js/register.js"></script>
+</body>
+</html>

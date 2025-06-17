@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Share Your Story | HireStory</title>
+  <link rel="stylesheet" href="assets/css/share.css" />
+</head>
+<body>
+  <header>
+    <h1>Share Your Interview Experience</h1>
+    <p>Inspire and guide others by sharing your story ✨</p>
+  </header>
+
+  <main>
+  <div class="form-container">
+    <form id="experienceForm">
+      <!-- Row 1: Name and Email -->
+      <div class="form-row">
+        <div class="form-group half">
+          <label>Name*</label>
+          <input type="text" id="name" required />
+        </div>
+        <div class="form-group half">
+          <label>Email (optional)</label>
+          <input type="email" id="email" />
+        </div>
+      </div>
+
+      <!-- Row 2: Company, Role, Difficulty -->
+      <div class="form-row">
+        <div class="form-group third">
+          <label>Company*</label>
+          <input type="text" id="company" required />
+        </div>
+        <div class="form-group third">
+          <label>Role*</label>
+          <input type="text" id="role" required />
+        </div>
+        <div class="form-group third">
+          <label>Difficulty*</label>
+          <select id="difficulty" required>
+            <option value="">-- Select --</option>
+            <option value="Easy">Easy</option>
+            <option value="Medium">Medium</option>
+            <option value="Hard">Hard</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Remaining -->
+      <label>Experience*</label>
+      <textarea id="experience" rows="6" required></textarea>
+
+      <label>Tags (optional, comma separated)</label>
+      <input type="text" id="tags" placeholder="e.g. HR Round, DSA, System Design" />
+
+      <label>Helpful Resources (optional)</label>
+      <textarea id="resources" rows="3" placeholder="Paste links to GitHub, articles, notes, etc."></textarea>
+
+      <button type="submit">Submit Experience</button>
+    </form>
+
+    <div id="message"></div>
+  </div>
+</main>
+
+
+  <footer>
+    <p>&copy; 2025 HireStory. Made with ❤️ by Mohisina.</p>
+  </footer>
+
+  <script src="assets/js/share.js"></script>
+</body>
+</html>

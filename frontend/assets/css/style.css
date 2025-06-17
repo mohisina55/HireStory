@@ -1,0 +1,77 @@
+/* assets/css/style.css */
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: #fff;
+  color: #333;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 50px;
+  background-color: #ff5e57;
+  color: #fff;
+}
+.logo{
+  font-size: 25px;
+}
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 30px;
+}
+
+.nav-links a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.banner {
+  text-align: center;
+  padding: 130px 20px;
+  background: linear-gradient(to right, #fa544b, #f89c1b);
+  color: #fff;
+}
+
+.banner h1 {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+.banner p {
+  font-size: 18px;
+  margin-bottom: 30px;
+}
+
+.btn {
+  padding: 12px 30px;
+  background-color: #fff;
+  color: #ff5e57;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  text-decoration: none;
+  transition: 0.3s;
+}
+
+.btn:hover {
+  background-color: #ffe6e3;
+  color: #ff5e57;
+}
+
+.about {
+  padding: 60px 20px;
+  max-width: 800px;
+  margin: auto;
+  text-align: center;
+}
+
+footer {
+  text-align: center;
+  padding: 10px;
+  background: #f2f2f2;
+  margin-top: 40px;
+}
