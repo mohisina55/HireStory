@@ -1,3 +1,9 @@
+const currentUser = localStorage.getItem("user");
+if (!currentUser) {
+  alert("You must be logged in to share your experience.");
+  window.location.href = "login.html";
+}
+
 document.getElementById("experienceForm").addEventListener("submit", async function (e) {
   e.preventDefault();
 
@@ -7,19 +13,18 @@ document.getElementById("experienceForm").addEventListener("submit", async funct
     company: document.getElementById("company").value.trim(),
     role: document.getElementById("role").value.trim(),
     difficulty: document.getElementById("difficulty").value,
-    experience: document.getElementById("experience").value.trim(),
+    experienceText: document.getElementById("experience").value.trim(),
     tags: document.getElementById("tags").value.trim().split(',').map(t => t.trim()).filter(Boolean),
-    resources: document.getElementById("resources").value.trim()
+    resources: document.getElementById("resources").value.trim().split(',').map(r => r.trim()).filter(Boolean)
   };
 
-  // Optional: simple client-side check
-  if (!data.name || !data.company || !data.role || !data.difficulty || !data.experience) {
+  if (!data.name || !data.company || !data.role || !data.difficulty || !data.experienceText) {
     document.getElementById("message").textContent = "Please fill in all required fields.";
     return;
   }
 
   try {
-    const res = await fetch("/api/posts", {
+    const res = await fetch("http://localhost:5000/api/experience", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data)
@@ -27,11 +32,15 @@ document.getElementById("experienceForm").addEventListener("submit", async funct
 
     if (res.ok) {
       document.getElementById("message").textContent = "✅ Your experience was shared successfully!";
+      setTimeout(() => {
+        window.location.href = "view.html";
+      }, 1500);
       document.getElementById("experienceForm").reset();
     } else {
       throw new Error("Failed to submit");
     }
   } catch (err) {
+    console.error(err);
     document.getElementById("message").textContent = "❌ Something went wrong. Try again later.";
   }
 });

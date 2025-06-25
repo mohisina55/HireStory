@@ -3,12 +3,12 @@ let allPosts = [];
 // Load all posts on page load
 async function loadPosts() {
   try {
-    const res = await fetch('/api/posts'); // adjust this URL as per backend
+    const res = await fetch('http://localhost:5000/api/experience');
     allPosts = await res.json();
     populateFilters(allPosts);
     renderPosts(allPosts);
   } catch (err) {
-    console.error('Error fetching posts:', err);
+    console.error('❌ Error fetching posts:', err);
   }
 }
 
@@ -20,7 +20,10 @@ function applyFilters() {
   const difficulty = document.getElementById('difficultyFilter').value;
 
   const filtered = allPosts.filter(post => {
-    const matchSearch = post.company.toLowerCase().includes(search) || post.role.toLowerCase().includes(search);
+    const matchSearch = post.company.toLowerCase().includes(search) ||
+                        post.role.toLowerCase().includes(search) ||
+                        (post.tags || []).some(tag => tag.toLowerCase().includes(search));
+    
     const matchCompany = company === 'All' || post.company === company;
     const matchRole = role === 'All' || post.role === role;
     const matchDifficulty = difficulty === 'All' || post.difficulty === difficulty;
@@ -31,7 +34,12 @@ function applyFilters() {
   renderPosts(filtered);
 }
 
-// Render post cards
+// 🔒 Check if user is logged in
+function isUserLoggedIn() {
+  return !!localStorage.getItem("user");
+}
+
+// ✅ Corrected renderPosts() function
 function renderPosts(posts) {
   const container = document.getElementById('postsContainer');
   container.innerHTML = '';
@@ -44,13 +52,32 @@ function renderPosts(posts) {
   posts.forEach(post => {
     const card = document.createElement('div');
     card.className = 'post-card';
+
     card.innerHTML = `
-      <h3>${post.company}</h3>
-      <p><strong>Role:</strong> ${post.role}</p>
+      <h3>${post.role} @ ${post.company}</h3>
       <p><strong>Difficulty:</strong> ${post.difficulty}</p>
-      <p>${post.experience.substring(0, 150)}...</p>
-      <a href="post-details.html?id=${post._id}">Read More</a>
+      <p><strong>Tags:</strong> ${(post.tags || []).join(', ')}</p>
+      <p><strong>Experience:</strong> ${post.experienceText?.substring(0, 150)}...</p>
+      <details>
+        <summary>Resources</summary>
+        <ul>
+          ${(post.resources || []).map(r => `<li><a href="${r}" target="_blank">${r}</a></li>`).join('')}
+        </ul>
+      </details>
     `;
+
+    if (isUserLoggedIn()) {
+      const readMore = document.createElement("a");
+      readMore.href = `post-details.html?id=${post._id}`;
+      readMore.textContent = "Read More";
+      readMore.className = "read-more-btn";
+      card.appendChild(readMore);
+    } else {
+      const loginNotice = document.createElement("p");
+      loginNotice.innerHTML = "<em>🔒 Login to view full experience.</em>";
+      card.appendChild(loginNotice);
+    }
+
     container.appendChild(card);
   });
 }
@@ -68,6 +95,9 @@ function populateFilters(posts) {
   const companyFilter = document.getElementById('companyFilter');
   const roleFilter = document.getElementById('roleFilter');
 
+  companyFilter.innerHTML = '<option value="All">All Companies</option>';
+  roleFilter.innerHTML = '<option value="All">All Roles</option>';
+
   companySet.forEach(company => {
     const option = document.createElement('option');
     option.value = company;
@@ -81,6 +111,12 @@ function populateFilters(posts) {
     option.textContent = role;
     roleFilter.appendChild(option);
   });
+}
+
+// Logout function
+function logout() {
+  localStorage.removeItem("user");
+  window.location.href = "index.html";
 }
 
 // Event listeners

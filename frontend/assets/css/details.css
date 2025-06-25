@@ -1,0 +1,27 @@
+body {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 30px;
+  padding: 0;
+  background-color: #f9f9ff;
+  color: #333;
+}
+
+.details-container {
+  max-width: 800px;
+  margin: auto;
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 20px;
+  color: #b47afc;
+  text-decoration: none;
+}
+
+#resourcesList li {
+  margin-bottom: 8px;
+}

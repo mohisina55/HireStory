@@ -6,7 +6,7 @@ document.getElementById("registerForm").addEventListener("submit", async functio
   const role = document.getElementById("role").value;
 
   try {
-    const res = await fetch("/api/register", {
+    const res = await fetch("http://localhost:5000/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, role })
@@ -24,5 +24,6 @@ document.getElementById("registerForm").addEventListener("submit", async functio
     }
   } catch (err) {
     document.getElementById("message").textContent = "❌ Error during registration.";
+    console.error(err); // optional, to see detailed error
   }
 });
