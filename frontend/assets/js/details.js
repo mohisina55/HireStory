@@ -13,7 +13,7 @@ async function loadExperience() {
   }
 
   try {
-    const res = await fetch(`http://localhost:5000/api/experience/${id}`);
+    const res = await fetch(`https://hirestory-1.onrender.com/api/experience/${id}`);
     if (!res.ok) throw new Error("Post not found");
 
     const post = await res.json();

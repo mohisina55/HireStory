@@ -6,10 +6,13 @@ const jwt = require("jsonwebtoken");
 const User = require("./models/User"); // 👈 YOU MISSED THIS LINE
 const Experience = require("./models/Experience");
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: "https://flourishing-granita-3b6412.netlify.app/index.html", // ✅ Replace with your Netlify URL
+  credentials: true
+}));
 app.use(express.json());
 
 // MongoDB Connection
@@ -54,7 +57,7 @@ app.post("/api/login", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on htpp://localhost:${PORT}`);
 });
 
 app.post("/api/experience", async (req, res) => {

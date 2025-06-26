@@ -3,7 +3,7 @@ let allPosts = [];
 // Load all posts on page load
 async function loadPosts() {
   try {
-    const res = await fetch('http://localhost:5000/api/experience');
+    const res = await fetch('https://hirestory-1.onrender.com/api/experience');
     allPosts = await res.json();
     populateFilters(allPosts);
     renderPosts(allPosts);
