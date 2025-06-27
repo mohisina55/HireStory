@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-  origin: "https://flourishing-granita-3b6412.netlify.app/index.html", // ✅ Replace with your Netlify URL
+  origin: "https://flourishing-granita-3b6412.netlify.app", // ✅ Replace with your Netlify URL
   credentials: true
 }));
 app.use(express.json());
