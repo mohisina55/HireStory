@@ -55,6 +55,9 @@ app.post("/api/login", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+app.get("/", (req, res) => {
+  res.send("✅ HireStory Backend API is running.");
+});
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on htpp://localhost:${PORT}`);
