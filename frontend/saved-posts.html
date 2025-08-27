@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HireStory - Saved Posts</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    body { font-family: 'Poppins', sans-serif; padding: 20px; }
+    h2 { margin-bottom: 20px; }
+    .post { border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
+    .post h3 { margin: 0 0 10px 0; }
+    .post p { margin: 5px 0; }
+    .unsave-btn { background: #ff4d4f; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 5px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <nav class="navbar">
+      <div class="logo">HireStory</div>
+      <div class="nav-right">
+        <ul class="nav-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="view.html">View Posts</a></li>
+          <li><a href="share.html">Share Experience</a></li>
+          <li><a href="login.html" id="loginLink">Login/Register</a></li>
+        </ul>
+        <!-- 🔹 User Icon -->
+        <div class="user-icon" id="userIcon" style="display:none;">U</div>
+        <div class="dropdown" id="dropdownMenu">
+          <a href="saved-posts.html">Saved Posts</a>
+          <a href="my-posts.html">My Posts</a>
+          <a href="activity.html">Activity</a>
+          <a href="#" id="logoutBtn">Logout</a>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <h2>Saved Posts</h2>
+  <div id="posts"></div>
+
+  <script>
+    const currentUser = JSON.parse(localStorage.getItem("user"));
+
+    if (!currentUser) {
+      alert("Please login to view saved posts.");
+      window.location.href = "login.html";
+    } else {
+      const userEmail = currentUser.email;
+      const allSavedPosts = JSON.parse(localStorage.getItem("savedPosts") || "{}");
+      const savedPosts = allSavedPosts[userEmail] || [];
+
+      const postsContainer = document.getElementById("posts");
+
+      if (savedPosts.length === 0) {
+        postsContainer.innerHTML = '<p>No saved posts yet.</p>';
+      } else {
+        savedPosts.forEach((post, index) => {
+          const postDiv = document.createElement("div");
+          postDiv.classList.add("post");
+          postDiv.innerHTML = `
+            <h3>${post.role} @ ${post.company}</h3>
+            <p><strong>Difficulty:</strong> ${post.difficulty}</p>
+            <p>${post.experienceText}</p>
+            ${post.tags ? `<p><strong>Tags:</strong> ${post.tags.join(", ")}</p>` : ""}
+            ${post.resources && post.resources.length ? `<p><strong>Resources:</strong> ${post.resources.map(r => `<a href="${r}" target="_blank">${r}</a>`).join(", ")}</p>` : ""}
+            <button class="unsave-btn" data-index="${index}">Remove</button>
+          `;
+          postsContainer.appendChild(postDiv);
+        });
+
+        // Unsave button functionality
+        document.querySelectorAll(".unsave-btn").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const idx = btn.dataset.index;
+            savedPosts.splice(idx, 1);
+            allSavedPosts[userEmail] = savedPosts;
+            localStorage.setItem("savedPosts", JSON.stringify(allSavedPosts));
+            location.reload(); // reload to update view
+          });
+        });
+      }
+    }
+    const userIcon = document.getElementById('userIcon');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+    const loginLink = document.getElementById('loginLink');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    // 🔹 Check for logged-in user
+    // Use the already declared currentUser variable
+
+    if (currentUser) {
+  loginLink.style.display = 'none';
+  userIcon.style.display = 'flex';
+  const displayLetter = currentUser.name 
+    ? currentUser.name.charAt(0).toUpperCase()
+    : currentUser.email.charAt(0).toUpperCase();
+  userIcon.textContent = displayLetter;
+}
+
+
+    // Toggle dropdown
+    userIcon.addEventListener('click', () => {
+      dropdownMenu.classList.toggle('show');
+    });
+
+    // Close dropdown on click outside
+    window.addEventListener('click', (event) => {
+      if (!event.target.closest('.user-icon') && !event.target.closest('.dropdown')) {
+        dropdownMenu.classList.remove('show');
+      }
+    });
+
+    // Logout
+    logoutBtn.addEventListener('click', () => {
+      localStorage.clear();
+      alert('Logged out successfully!');
+      window.location.href = 'index.html';
+    });
+  
+  </script>
+</body>
+</html>

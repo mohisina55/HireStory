@@ -7,18 +7,29 @@
   <link rel="stylesheet" href="assets/css/style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet"/>
+  
 </head>
 <body>
   <!-- Header -->
   <header>
     <nav class="navbar">
       <div class="logo">HireStory</div>
-      <ul class="nav-links">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="view.html">View Posts</a></li>
-        <li><a href="share.html">Share Experience</a></li>
-        <li><a href="login.html">Login/Register</a></li>
-      </ul>
+      <div class="nav-right">
+        <ul class="nav-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="view.html">View Posts</a></li>
+          <li><a href="share.html">Share Experience</a></li>
+          <li><a href="login.html" id="loginLink">Login/Register</a></li>
+        </ul>
+        <!-- 🔹 User Icon -->
+        <div class="user-icon" id="userIcon" style="display:none;">U</div>
+        <div class="dropdown" id="dropdownMenu">
+          <a href="saved-posts.html">Saved Posts</a>
+          <a href="my-posts.html">My Posts</a>
+          <a href="activity.html">Activity</a>
+          <a href="#" id="logoutBtn">Logout</a>
+        </div>
+      </div>
     </nav>
   </header>
 
@@ -38,12 +49,50 @@
       Contribute your story and help others in their journey!
     </p>
     <h2>What is Idea Behind HireStory?</h2>
-    <p>Your story might be exactly what someone needs to hear today. 🚀
-</p>
+    <p>Your story might be exactly what someone needs to hear today. 🚀</p>
   </section>
 
   <footer>
     <p>&copy; 2025 HireStory. Made with ❤️ by Mohisina.</p>
   </footer>
+
+  <script>
+    const userIcon = document.getElementById('userIcon');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+    const loginLink = document.getElementById('loginLink');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    // 🔹 Check for logged-in user
+    const currentUser = JSON.parse(localStorage.getItem('user')) || null;
+
+    if (currentUser) {
+  loginLink.style.display = 'none';
+  userIcon.style.display = 'flex';
+  const displayLetter = currentUser.name 
+    ? currentUser.name.charAt(0).toUpperCase()
+    : currentUser.email.charAt(0).toUpperCase();
+  userIcon.textContent = displayLetter;
+}
+
+
+    // Toggle dropdown
+    userIcon.addEventListener('click', () => {
+      dropdownMenu.classList.toggle('show');
+    });
+
+    // Close dropdown on click outside
+    window.addEventListener('click', (event) => {
+      if (!event.target.closest('.user-icon') && !event.target.closest('.dropdown')) {
+        dropdownMenu.classList.remove('show');
+      }
+    });
+
+    // Logout
+    logoutBtn.addEventListener('click', () => {
+      localStorage.clear();
+      alert('Logged out successfully!');
+      window.location.href = 'index.html';
+    });
+  </script>
 </body>
 </html>

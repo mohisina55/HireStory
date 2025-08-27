@@ -1,6 +1,10 @@
 // models/Experience.js
 const mongoose = require("mongoose");
-
+const commentSchema = new mongoose.Schema({
+  user: String,           // email or name of the user
+  text: String,           // comment text
+  date: { type: Date, default: Date.now }
+});
 const experienceSchema = new mongoose.Schema({
   name: String,
   email: String,
@@ -10,6 +14,8 @@ const experienceSchema = new mongoose.Schema({
   experienceText: String,
   tags: [String],
   resources: [String],
+  likes: { type: Number, default: 0 },      // 👍 Likes
+  comments: [commentSchema],   
   date: {
     type: Date,
     default: Date.now,

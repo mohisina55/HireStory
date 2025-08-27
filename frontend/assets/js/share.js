@@ -24,7 +24,7 @@ document.getElementById("experienceForm").addEventListener("submit", async funct
   }
 
   try {
-    const res = await fetch("https://hirestory-1.onrender.com/api/experience", {
+    const res = await fetch("http://localhost:5000/api/experience", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data)

@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-  origin: "https://flourishing-granita-3b6412.netlify.app", // ✅ Replace with your Netlify URL
+  origin: ["http://127.0.0.1:5500", "http://localhost:5500"], // ✅ Replace with your Netlify URL
   credentials: true
 }));
 app.use(express.json());
@@ -60,7 +60,7 @@ app.get("/", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on htpp://localhost:${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
 
 app.post("/api/experience", async (req, res) => {
@@ -118,3 +118,36 @@ app.get("/api/experience/:id", async (req, res) => {
     res.status(500).json({ message: "Failed to fetch post" });
   }
 });
+// Like a post
+app.post("/api/experience/:id/like", async (req, res) => {
+  try {
+    const post = await Experience.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    post.likes = (post.likes || 0) + 1;
+    await post.save();
+    res.json({ likes: post.likes });
+  } catch (err) {
+    console.error("❌ Error liking post:", err);
+    res.status(500).json({ message: "Failed to like post" });
+  }
+});
+
+// Comment on a post
+app.post("/api/experience/:id/comment", async (req, res) => {
+  const { user, text } = req.body;
+  if (!user || !text) return res.status(400).json({ message: "Invalid comment data" });
+
+  try {
+    const post = await Experience.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    post.comments.push({ user, text });
+    await post.save();
+    res.json({ comments: post.comments });
+  } catch (err) {
+    console.error("❌ Error commenting post:", err);
+    res.status(500).json({ message: "Failed to add comment" });
+  }
+});
+

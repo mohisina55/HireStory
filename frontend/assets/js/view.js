@@ -3,7 +3,7 @@ let allPosts = [];
 // Load all posts on page load
 async function loadPosts() {
   try {
-    const res = await fetch('https://hirestory-1.onrender.com/api/experience');
+    const res = await fetch('http://localhost:5000/api/experience');
     allPosts = await res.json();
     populateFilters(allPosts);
     renderPosts(allPosts);
@@ -58,6 +58,7 @@ function renderPosts(posts) {
       <p><strong>Difficulty:</strong> ${post.difficulty}</p>
       <p><strong>Tags:</strong> ${(post.tags || []).join(', ')}</p>
       <p><strong>Experience:</strong> ${post.experienceText?.substring(0, 150)}...</p>
+      <p><strong>Posted by:</strong> ${post.email}</p>  <!-- 👈 Added this line -->
       <details>
         <summary>Resources</summary>
         <ul>
@@ -81,6 +82,7 @@ function renderPosts(posts) {
     container.appendChild(card);
   });
 }
+
 
 // Populate dropdowns with unique values
 function populateFilters(posts) {
@@ -118,7 +120,40 @@ function logout() {
   localStorage.removeItem("user");
   window.location.href = "index.html";
 }
+const userIcon = document.getElementById('userIcon');
+const dropdownMenu = document.getElementById('dropdownMenu');
+const loginLink = document.getElementById('loginLink');
+const logoutBtn = document.getElementById('logoutBtn');
 
+const currentUser = JSON.parse(localStorage.getItem('user')) || null;
+
+if (currentUser) {
+  loginLink.style.display = 'none';
+  userIcon.style.display = 'flex';
+  const displayLetter = currentUser.name 
+    ? currentUser.name.charAt(0).toUpperCase()
+    : currentUser.email.charAt(0).toUpperCase();
+  userIcon.textContent = displayLetter;
+}
+
+// Toggle dropdown
+userIcon.addEventListener('click', () => {
+  dropdownMenu.classList.toggle('show');
+});
+
+// Close dropdown on click outside
+window.addEventListener('click', (event) => {
+  if (!event.target.closest('.user-icon') && !event.target.closest('.dropdown')) {
+    dropdownMenu.classList.remove('show');
+  }
+});
+
+// Logout
+logoutBtn.addEventListener('click', () => {
+  localStorage.clear();
+  alert('Logged out successfully!');
+  window.location.href = 'index.html';
+});
 // Event listeners
 document.getElementById('searchInput').addEventListener('input', applyFilters);
 document.getElementById('companyFilter').addEventListener('change', applyFilters);

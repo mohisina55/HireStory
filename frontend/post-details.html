@@ -9,6 +9,7 @@
 <body>
   <div class="details-container">
     <a href="view.html" class="back-link">← Back to Posts</a>
+
     <h2 id="roleCompany"></h2>
     <p><strong>Difficulty:</strong> <span id="difficulty"></span></p>
     <p><strong>Tags:</strong> <span id="tags"></span></p>
@@ -18,6 +19,19 @@
     <div id="resourcesSection">
       <p><strong>Helpful Resources:</strong></p>
       <ul id="resourcesList"></ul>
+    </div>
+
+    <!-- Interaction Section: Like, Save, Comments -->
+    <div id="interactionSection">
+      <button id="likeBtn">👍 Like (<span id="likeCount">0</span>)</button>
+      <button id="saveBtn">💾 Save</button>
+
+      <div id="commentsSection">
+        <h3>Comments</h3>
+        <ul id="commentsList"></ul>
+        <textarea id="commentInput" placeholder="Add a comment..."></textarea>
+        <button id="addCommentBtn">Post Comment</button>
+      </div>
     </div>
   </div>
 

@@ -8,10 +8,25 @@
 </head>
 <body>
   <header>
-    <h1>Interview Stories</h1>
-    <p>Read real experiences from real people.</p>
-    <button onclick="logout()">Logout</button>
-
+    <nav class="navbar">
+      <div class="logo">HireStory</div>
+      <div class="nav-right">
+        <ul class="nav-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="view.html">View Posts</a></li>
+          <li><a href="share.html">Share Experience</a></li>
+          <li><a href="login.html" id="loginLink">Login/Register</a></li>
+        </ul>
+        <!-- 🔹 User Icon -->
+        <div class="user-icon" id="userIcon" style="display:none;">U</div>
+        <div class="dropdown" id="dropdownMenu">
+          <a href="saved-posts.html">Saved Posts</a>
+          <a href="my-posts.html">My Posts</a>
+          <a href="activity.html">Activity</a>
+          <a href="#" id="logoutBtn">Logout</a>
+        </div>
+      </div>
+    </nav>
   </header>
 
   <!-- Filter Section -->
