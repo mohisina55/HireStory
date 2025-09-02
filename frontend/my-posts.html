@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Posts | HireStory</title>
+  <link rel="stylesheet" href="assets/css/view.css" />
+  <style>
+    .my-posts-header {
+      text-align: center;
+      padding: 30px 20px;
+      background: linear-gradient(to right, #fa544b, #f89c1b);
+      color: white;
+      margin-bottom: 30px;
+    }
+    
+    .my-posts-header h1 {
+      margin: 0;
+      font-size: 32px;
+    }
+    
+    .my-posts-header p {
+      margin: 10px 0 0 0;
+      font-size: 16px;
+      opacity: 0.9;
+    }
+    
+    .stats-container {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+    
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      text-align: center;
+      min-width: 120px;
+    }
+    
+    .stat-number {
+      font-size: 24px;
+      font-weight: bold;
+      color: #ff5e57;
+    }
+    
+    .stat-label {
+      font-size: 14px;
+      color: #666;
+      margin-top: 5px;
+    }
+    
+    .post-actions {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .btn-edit {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      text-decoration: none;
+      display: inline-block;
+    }
+    
+    .btn-delete {
+      background: #f44336;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    .btn-view {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      text-decoration: none;
+      display: inline-block;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+    }
+    
+    .empty-state h3 {
+      margin-bottom: 10px;
+      color: #ff5e57;
+    }
+    
+    .empty-state a {
+      color: #ff5e57;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    
+    .post-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .engagement-stats {
+      display: flex;
+      gap: 15px;
+    }
+
+    .btn-edit:hover {
+      background: #45a049;
+    }
+    
+    .btn-delete:hover {
+      background: #da190b;
+    }
+    
+    .btn-view:hover {
+      background: #1976D2;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <div class="logo">HireStory</div>
+      <div class="nav-right">
+        <ul class="nav-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="view.html">View Posts</a></li>
+          <li><a href="share.html">Share Experience</a></li>
+          <li><a href="login.html" id="loginLink">Login/Register</a></li>
+        </ul>
+        <!-- User Icon -->
+        <div class="user-icon" id="userIcon" style="display:none;">U</div>
+        <div class="dropdown" id="dropdownMenu">
+          <a href="saved-posts.html">Saved Posts</a>
+          <a href="my-posts.html">My Posts</a>
+          <a href="activity.html">Activity</a>
+          <a href="#" id="logoutBtn">Logout</a>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <div class="my-posts-header">
+    <h1>My Posts</h1>
+    <p>Manage and track your shared interview experiences</p>
+    
+    <div class="stats-container">
+      <div class="stat-card">
+        <div class="stat-number" id="totalPosts">0</div>
+        <div class="stat-label">Total Posts</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="totalLikes">0</div>
+        <div class="stat-label">Total Likes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="totalComments">0</div>
+        <div class="stat-label">Total Comments</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Posts Container -->
+  <section id="postsContainer"></section>
+
+  <footer>
+    <p>&copy; 2025 HireStory. Made with ❤️ by Mohisina.</p>
+  </footer>
+
+  <script>
+    // Check if user is logged in
+    const currentUser = JSON.parse(localStorage.getItem("user"));
+    if (!currentUser) {
+      alert("Please login to view your posts.");
+      window.location.href = "login.html";
+    }
+
+    let userPosts = [];
+
+    // Load user's posts
+    async function loadMyPosts() {
+      try {
+        const res = await fetch('http://localhost:5000/api/experience');
+        const allPosts = await res.json();
+        
+        // Filter posts by current user's email
+        userPosts = allPosts.filter(post => post.email === currentUser.email);
+        
+        updateStats();
+        renderMyPosts();
+      } catch (err) {
+        console.error('❌ Error fetching posts:', err);
+        document.getElementById('postsContainer').innerHTML = '<p>Error loading your posts.</p>';
+      }
+    }
+
+    // Update statistics
+    function updateStats() {
+      const totalPosts = userPosts.length;
+      const totalLikes = userPosts.reduce((sum, post) => sum + (post.likes || 0), 0);
+      const totalComments = userPosts.reduce((sum, post) => sum + (post.comments?.length || 0), 0);
+      
+      document.getElementById('totalPosts').textContent = totalPosts;
+      document.getElementById('totalLikes').textContent = totalLikes;
+      document.getElementById('totalComments').textContent = totalComments;
+    }
+
+    // Render user's posts
+    function renderMyPosts() {
+      const container = document.getElementById('postsContainer');
+      
+      if (userPosts.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>No posts yet!</h3>
+            <p>You haven't shared any interview experiences yet.</p>
+            <p><a href="share.html">Share your first experience →</a></p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = '';
+      
+      userPosts.forEach(post => {
+        const card = document.createElement('div');
+        card.className = 'post-card';
+        
+        // Format date
+        const postDate = new Date(post.date).toLocaleDateString();
+        
+        card.innerHTML = `
+          <h3>${post.role} @ ${post.company}</h3>
+          <p><strong>Difficulty:</strong> ${post.difficulty}</p>
+          <p><strong>Tags:</strong> ${(post.tags || []).join(', ') || 'None'}</p>
+          <p><strong>Experience:</strong> ${post.experienceText?.substring(0, 200)}${post.experienceText?.length > 200 ? '...' : ''}</p>
+          
+          <div class="post-meta">
+            <span>Posted on: ${postDate}</span>
+            <div class="engagement-stats">
+              <span>👍 ${post.likes || 0}</span>
+              <span>💬 ${post.comments?.length || 0}</span>
+            </div>
+          </div>
+          
+          <div class="post-actions">
+            <a href="post-details.html?id=${post._id}" class="btn-view">View Details</a>
+            <button class="btn-edit" onclick="editPost('${post._id}')">Edit</button>
+            <button class="btn-delete" onclick="deletePost('${post._id}')">Delete</button>
+          </div>
+        `;
+        
+        container.appendChild(card);
+      });
+    }
+
+    // Edit post function (placeholder for now)
+    function editPost(postId) {
+      // For now, just redirect to details page
+      // Later you can create an edit form
+      alert("Edit functionality coming soon!");
+      window.location.href = `post-details.html?id=${postId}`;
+    }
+
+    // Delete post function
+    async function deletePost(postId) {
+      if (!confirm("Are you sure you want to delete this post? This action cannot be undone.")) {
+        return;
+      }
+      
+      try {
+        const res = await fetch(`http://localhost:5000/api/experience/${postId}`, {
+          method: 'DELETE'
+        });
+        
+        if (res.ok) {
+          alert("Post deleted successfully!");
+          loadMyPosts(); // Refresh the list
+        } else {
+          const errorData = await res.json();
+          alert(`Failed to delete post: ${errorData.message}`);
+        }
+      } catch (err) {
+        console.error('❌ Error deleting post:', err);
+        alert("Error deleting post. Please try again.");
+      }
+    }
+    function editPost(postId) {
+      window.location.href = `edit-post.html?id=${postId}`;
+    }
+
+    // User dropdown functionality
+    const userIcon = document.getElementById('userIcon');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+    const loginLink = document.getElementById('loginLink');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    if (currentUser) {
+      loginLink.style.display = 'none';
+      userIcon.style.display = 'flex';
+      const displayLetter = currentUser.name 
+        ? currentUser.name.charAt(0).toUpperCase()
+        : currentUser.email.charAt(0).toUpperCase();
+      userIcon.textContent = displayLetter;
+    }
+
+    // Toggle dropdown
+    userIcon.addEventListener('click', () => {
+      dropdownMenu.classList.toggle('show');
+    });
+
+    // Close dropdown on click outside
+    window.addEventListener('click', (event) => {
+      if (!event.target.closest('.user-icon') && !event.target.closest('.dropdown')) {
+        dropdownMenu.classList.remove('show');
+      }
+    });
+
+    // Logout
+    logoutBtn.addEventListener('click', () => {
+      localStorage.clear();
+      alert('Logged out successfully!');
+      window.location.href = 'index.html';
+    });
+
+    // Initialize page
+    loadMyPosts();
+  </script>
+</body>
+</html>

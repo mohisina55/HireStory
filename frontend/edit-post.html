@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Edit Post | HireStory</title>
+  <link rel="stylesheet" href="assets/css/share.css" />
+  <style>
+    .edit-header {
+      text-align: center;
+      padding: 20px;
+      background: linear-gradient(to right, #fa544b, #f89c1b);
+      color: white;
+    }
+    
+    .back-link {
+      display: inline-block;
+      margin: 20px;
+      color: #ff5e57;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    
+    .back-link:hover {
+      text-decoration: underline;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 50px;
+      font-size: 18px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="edit-header">
+    <h1>Edit Your Experience</h1>
+    <p>Update your interview story</p>
+  </div>
+
+  <a href="my-posts.html" class="back-link">← Back to My Posts</a>
+
+  <main>
+    <div class="form-container">
+      <div id="loadingMessage" class="loading">Loading post data...</div>
+      
+      <form id="editForm" style="display: none;">
+        <!-- Row 1: Name and Email -->
+        <div class="form-row">
+          <div class="form-group half">
+            <label>Name*</label>
+            <input type="text" id="name" required />
+          </div>
+          <div class="form-group half">
+            <label>Email (optional)</label>
+            <input type="email" id="email" />
+          </div>
+        </div>
+
+        <!-- Row 2: Company, Role, Difficulty -->
+        <div class="form-row">
+          <div class="form-group third">
+            <label>Company*</label>
+            <input type="text" id="company" required />
+          </div>
+          <div class="form-group third">
+            <label>Role*</label>
+            <input type="text" id="role" required />
+          </div>
+          <div class="form-group third">
+            <label>Difficulty*</label>
+            <select id="difficulty" required>
+              <option value="">-- Select --</option>
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Experience Text -->
+        <label>Experience*</label>
+        <textarea id="experience" rows="6" required></textarea>
+
+        <!-- Tags -->
+        <label>Tags (optional, comma separated)</label>
+        <input type="text" id="tags" placeholder="e.g. HR Round, DSA, System Design" />
+
+        <!-- Resources -->
+        <label>Helpful Resources (optional)</label>
+        <textarea id="resources" rows="3" placeholder="Paste links to GitHub, articles, notes, etc."></textarea>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="submit" style="flex: 1;">Update Experience</button>
+          <button type="button" onclick="cancelEdit()" style="flex: 1; background: #6c757d;">Cancel</button>
+        </div>
+      </form>
+
+      <div id="message"></div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 HireStory. Made with ❤️ by Mohisina.</p>
+  </footer>
+
+  <script>
+    // Check if user is logged in
+    const currentUser = JSON.parse(localStorage.getItem("user"));
+    if (!currentUser) {
+      alert("Please login to edit posts.");
+      window.location.href = "login.html";
+    }
+
+    let postId = null;
+    let originalPost = null;
+
+    // Get post ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    postId = urlParams.get('id');
+
+    if (!postId) {
+      alert("Invalid post ID");
+      window.location.href = "my-posts.html";
+    }
+
+    // Load post data for editing
+    async function loadPostForEdit() {
+      try {
+        const res = await fetch(`http://localhost:5000/api/experience/${postId}`);
+        
+        if (!res.ok) {
+          throw new Error("Post not found");
+        }
+        
+        originalPost = await res.json();
+        
+        // Check if current user owns this post
+        if (originalPost.email !== currentUser.email) {
+          alert("You can only edit your own posts.");
+          window.location.href = "my-posts.html";
+          return;
+        }
+        
+        // Populate form with existing data
+        document.getElementById('name').value = originalPost.name || '';
+        document.getElementById('email').value = originalPost.email || '';
+        document.getElementById('company').value = originalPost.company || '';
+        document.getElementById('role').value = originalPost.role || '';
+        document.getElementById('difficulty').value = originalPost.difficulty || '';
+        document.getElementById('experience').value = originalPost.experienceText || '';
+        document.getElementById('tags').value = (originalPost.tags || []).join(', ');
+        document.getElementById('resources').value = (originalPost.resources || []).join('\n');
+        
+        // Hide loading, show form
+        document.getElementById('loadingMessage').style.display = 'none';
+        document.getElementById('editForm').style.display = 'block';
+        
+      } catch (err) {
+        console.error('❌ Error loading post:', err);
+        document.getElementById('loadingMessage').innerHTML = `
+          <p>❌ Error loading post: ${err.message}</p>
+          <p><a href="my-posts.html">← Back to My Posts</a></p>
+        `;
+      }
+    }
+
+    // Handle form submission
+    document.getElementById("editForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const data = {
+        name: document.getElementById("name").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        company: document.getElementById("company").value.trim(),
+        role: document.getElementById("role").value.trim(),
+        difficulty: document.getElementById("difficulty").value,
+        experienceText: document.getElementById("experience").value.trim(),
+        tags: document.getElementById("tags").value.trim().split(',').map(t => t.trim()).filter(Boolean),
+        resources: document.getElementById("resources").value.trim().split('\n').map(r => r.trim()).filter(Boolean)
+      };
+
+      // Validation
+      if (!data.name || !data.company || !data.role || !data.difficulty || !data.experienceText) {
+        document.getElementById("message").textContent = "Please fill in all required fields.";
+        document.getElementById("message").style.color = "red";
+        return;
+      }
+
+      try {
+        const res = await fetch(`http://localhost:5000/api/experience/${postId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+          document.getElementById("message").textContent = "✅ Post updated successfully!";
+          document.getElementById("message").style.color = "green";
+          
+          setTimeout(() => {
+            window.location.href = "my-posts.html";
+          }, 1500);
+        } else {
+          const errorData = await res.json();
+          throw new Error(errorData.message || "Failed to update post");
+        }
+      } catch (err) {
+        console.error('❌ Update error:', err);
+        document.getElementById("message").textContent = `❌ Error: ${err.message}`;
+        document.getElementById("message").style.color = "red";
+      }
+    });
+
+    // Cancel edit function
+    function cancelEdit() {
+      if (confirm("Are you sure you want to cancel? Any unsaved changes will be lost.")) {
+        window.location.href = "my-posts.html";
+      }
+    }
+
+    // Initialize
+    loadPostForEdit();
+  </script>
+</body>
+</html>
