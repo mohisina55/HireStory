@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Activity Dashboard | HireStory</title>
+  <link rel="stylesheet" href="assets/css/view.css" />
+  <style>
+    .activity-header {
+      text-align: center;
+      padding: 40px 20px;
+      background: linear-gradient(to right, #fa544b, #f89c1b);
+      color: white;
+      margin-bottom: 40px;
+    }
+    
+    .activity-header h1 {
+      margin: 0;
+      font-size: 36px;
+      font-weight: 600;
+    }
+    
+    .activity-header p {
+      margin: 15px 0 0 0;
+      font-size: 18px;
+      opacity: 0.9;
+    }
+
+    .analytics-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 25px;
+      margin-bottom: 40px;
+    }
+    
+    .metric-card {
+      background: linear-gradient(to right, #fa8f8a, #f2bc6f);
+      color: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+    
+    .metric-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .metric-card.blue { background: linear-gradient(to right, #ff6b61, #ffa726); }
+    .metric-card.green { background: linear-gradient(to right, #ff7043, #ffab40); }
+    .metric-card.purple { background: linear-gradient(to right, #e57373, #ffb74d); }
+    .metric-card.orange { background: linear-gradient(to right, #ffab91, #ffe0b2); color: #333; }
+    
+    .metric-number {
+      font-size: 42px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      display: block;
+    }
+    
+    .metric-label {
+      font-size: 16px;
+      opacity: 0.9;
+      font-weight: 500;
+    }
+    
+    .metric-sublabel {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-top: 5px;
+    }
+
+    .loading-spinner {
+      text-align: center;
+      padding: 50px;
+      color: #666;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #ff5e57;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .charts-section {
+      margin: 50px 0;
+    }
+    
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+    
+    .chart-container {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+      border-left: 4px solid #ff5e57;
+    }
+    
+    .chart-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #ff5e57;
+      text-align: center;
+    }
+
+    .activity-feed {
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+      border-left: 4px solid #ff5e57;
+      margin-bottom: 30px;
+    }
+    
+    .feed-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 25px;
+      color: #ff5e57;
+      text-align: center;
+    }
+    
+    .activity-item {
+      display: flex;
+      align-items: center;
+      padding: 15px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .activity-item:last-child {
+      border-bottom: none;
+    }
+    
+    .activity-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 15px;
+      font-size: 18px;
+    }
+    
+    .activity-icon.like { background: #ffe6e6; color: #ff5e57; }
+    .activity-icon.comment { background: #fff3e6; color: #ff9f1c; }
+    .activity-icon.post { background: #ffeaa7; color: #ff6b61; }
+    .activity-icon.save { background: #ffcccc; color: #ff4757; }
+    .activity-icon.view { background: #e6f7ff; color: #1890ff; }
+    
+    .activity-content {
+      flex: 1;
+    }
+    
+    .activity-description {
+      font-weight: 500;
+      margin-bottom: 5px;
+    }
+    
+    .activity-meta {
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .activity-time {
+      font-size: 12px;
+      color: #999;
+      margin-left: auto;
+    }
+
+    .insights-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 25px;
+      margin-bottom: 40px;
+    }
+    
+    .insight-card {
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+      border-left: 5px solid #ff5e57;
+    }
+    
+    .insight-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #ff5e57;
+    }
+    
+    .insight-content {
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .filter-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+    
+    .tab-btn {
+      padding: 12px 24px;
+      border: 2px solid #ff5e57;
+      background: transparent;
+      color: #ff5e57;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+    
+    .tab-btn.active {
+      background: linear-gradient(to right, #fa544b, #f89c1b);
+      color: white;
+      border-color: transparent;
+    }
+    
+    .tab-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(255, 94, 87, 0.3);
+      background: linear-gradient(to right, #fa8f8a, #f2bc6f);
+      color: white;
+      border-color: transparent;
+    }
+
+    .progress-section {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+      border-left: 4px solid #ff5e57;
+      margin-bottom: 30px;
+    }
+    
+    .progress-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 25px;
+      text-align: center;
+      color: #ff5e57;
+    }
+    
+    .progress-item {
+      margin-bottom: 20px;
+    }
+    
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    
+    .progress-bar {
+      height: 8px;
+      background: #f0f0f0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(to right, #fa544b, #f89c1b);
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    .error-state {
+      text-align: center;
+      padding: 50px;
+      color: #666;
+      background: white;
+      border-radius: 15px;
+      margin: 20px;
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+      font-style: italic;
+    }
+
+    @media (max-width: 768px) {
+      .chart-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .activity-header h1 {
+        font-size: 28px;
+      }
+      
+      .metrics-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+      }
+      
+      .metric-card {
+        padding: 20px;
+      }
+      
+      .metric-number {
+        font-size: 32px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <div class="logo">HireStory</div>
+      <div class="nav-right">
+        <ul class="nav-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="view.html">View Posts</a></li>
+          <li><a href="share.html">Share Experience</a></li>
+          <li><a href="login.html" id="loginLink">Login/Register</a></li>
+        </ul>
+        <div class="user-icon" id="userIcon" style="display:none;">U</div>
+        <div class="dropdown" id="dropdownMenu">
+          <a href="saved-posts.html">Saved Posts</a>
+          <a href="my-posts.html">My Posts</a>
+          <a href="activity.html">Activity</a>
+          <a href="#" id="logoutBtn">Logout</a>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <div class="activity-header">
+    <h1>Activity Dashboard</h1>
+    <p>Track your real engagement and growth on HireStory</p>
+  </div>
+
+  <div class="analytics-container">
+    <!-- Loading State -->
+    <div class="loading-spinner" id="loadingState">
+      <div class="spinner"></div>
+      <p>Loading your activity data...</p>
+    </div>
+
+    <!-- Error State -->
+    <div class="error-state" id="errorState" style="display: none;">
+      <h3>Unable to load activity data</h3>
+      <p>Please check your connection and try again.</p>
+      <button onclick="location.reload()" style="margin-top: 15px; padding: 10px 20px; background: #ff5e57; color: white; border: none; border-radius: 5px; cursor: pointer;">Retry</button>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent" style="display: none;">
+      <!-- Key Metrics -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <span class="metric-number" id="totalLikesGiven">0</span>
+          <div class="metric-label">Likes Given</div>
+          <div class="metric-sublabel">Your appreciation shown</div>
+        </div>
+        
+        <div class="metric-card blue">
+          <span class="metric-number" id="totalComments">0</span>
+          <div class="metric-label">Comments Made</div>
+          <div class="metric-sublabel">Community interactions</div>
+        </div>
+        
+        <div class="metric-card green">
+          <span class="metric-number" id="postsShared">0</span>
+          <div class="metric-label">Posts Shared</div>
+          <div class="metric-sublabel">Your contributions</div>
+        </div>
+        
+        <div class="metric-card purple">
+          <span class="metric-number" id="postsSaved">0</span>
+          <div class="metric-label">Posts Saved</div>
+          <div class="metric-sublabel">Knowledge bookmarked</div>
+        </div>
+        
+        <div class="metric-card orange">
+          <span class="metric-number" id="engagementScore">0</span>
+          <div class="metric-label">Engagement Score</div>
+          <div class="metric-sublabel">Overall activity level</div>
+        </div>
+        
+        <div class="metric-card blue">
+          <span class="metric-number" id="streakDays">0</span>
+          <div class="metric-label">Activity Streak</div>
+          <div class="metric-sublabel">Consecutive active days</div>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="charts-section">
+        <div class="chart-grid">
+          <div class="chart-container">
+            <div class="chart-title">Daily Activity (Last 7 Days)</div>
+            <canvas id="activityChart" width="400" height="200"></canvas>
+          </div>
+          
+          <div class="chart-container">
+            <div class="chart-title">Engagement Breakdown</div>
+            <canvas id="engagementChart" width="400" height="200"></canvas>
+          </div>
+        </div>
+        
+        <div class="chart-container">
+          <div class="chart-title">Your Top Interests</div>
+          <canvas id="interestsChart" width="800" height="300"></canvas>
+        </div>
+      </div>
+
+      <!-- Progress Tracking -->
+      <div class="progress-section">
+        <div class="progress-title">Achievement Progress</div>
+        
+        <div class="progress-item">
+          <div class="progress-label">
+            <span>Community Helper (Comments)</span>
+            <span id="commenterProgress">0/50</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="commenterBar" style="width: 0%"></div>
+          </div>
+        </div>
+        
+        <div class="progress-item">
+          <div class="progress-label">
+            <span>Story Teller (Posts)</span>
+            <span id="storytellerProgress">0/10</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="storytellerBar" style="width: 0%"></div>
+          </div>
+        </div>
+        
+        <div class="progress-item">
+          <div class="progress-label">
+            <span>Knowledge Seeker (Saves)</span>
+            <span id="seekerProgress">0/25</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="seekerBar" style="width: 0%"></div>
+          </div>
+        </div>
+        
+        <div class="progress-item">
+          <div class="progress-label">
+            <span>Supporter (Likes)</span>
+            <span id="supporterProgress">0/100</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="supporterBar" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Insights -->
+      <div class="insights-section">
+        <div class="insight-card">
+          <div class="insight-title">🎯 Your Top Interest</div>
+          <div class="insight-content" id="topInterest">
+            Loading your interests...
+          </div>
+        </div>
+        
+        <div class="insight-card">
+          <div class="insight-title">📈 Activity Trend</div>
+          <div class="insight-content" id="activityTrend">
+            Analyzing your engagement patterns...
+          </div>
+        </div>
+        
+        <div class="insight-card">
+          <div class="insight-title">🏆 Next Milestone</div>
+          <div class="insight-content" id="nextMilestone">
+            Calculating your progress...
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Feed -->
+      <div class="activity-feed">
+        <div class="feed-title">Recent Activity</div>
+        
+        <div class="filter-tabs">
+          <button class="tab-btn active" data-filter="all">All Activity</button>
+          <button class="tab-btn" data-filter="like">Likes</button>
+          <button class="tab-btn" data-filter="comment">Comments</button>
+          <button class="tab-btn" data-filter="post">Posts</button>
+          <button class="tab-btn" data-filter="save">Saves</button>
+        </div>
+        
+        <div id="activityFeed">
+          <!-- Activity items will be populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 HireStory. Made with ❤️ by Mohisina.</p>
+  </footer>
+
+  <script>
+    // Check if user is logged in
+    const currentUser = JSON.parse(localStorage.getItem("user"));
+    if (!currentUser) {
+      alert("Please login to view your activity.");
+      window.location.href = "login.html";
+    }
+
+    let activityData = {
+      summary: {},
+      timeline: [],
+      stats: {},
+      streak: 0
+    };
+
+    // Load real activity data from backend
+    async function loadRealActivityData() {
+      try {
+        // Show loading state
+        document.getElementById('loadingState').style.display = 'block';
+        document.getElementById('errorState').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'none';
+
+        // Fetch all activity data
+        const [summaryRes, timelineRes, statsRes, streakRes] = await Promise.all([
+          fetch(`http://localhost:5000/api/activity/summary/${currentUser._id}`),
+          fetch(`http://localhost:5000/api/activity/timeline/${currentUser._id}?days=30`),
+          fetch(`http://localhost:5000/api/activity/stats/${currentUser._id}`),
+          fetch(`http://localhost:5000/api/activity/streak/${currentUser._id}`)
+        ]);
+
+        if (!summaryRes.ok || !timelineRes.ok || !statsRes.ok || !streakRes.ok) {
+          throw new Error('Failed to fetch activity data');
+        }
+
+        activityData.summary = await summaryRes.json();
+        activityData.timeline = await timelineRes.json();
+        activityData.stats = await statsRes.json();
+        activityData.streak = (await streakRes.json()).streak;
+
+        updateUI();
+      } catch (err) {
+        console.error("❌ Error loading activity data:", err);
+        showErrorState();
+      }
+    }
+
+    function showErrorState() {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('errorState').style.display = 'block';
+      document.getElementById('mainContent').style.display = 'none';
+    }
+
+    function updateUI() {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('errorState').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'block';
+
+      updateMetrics();
+      updateCharts();
+      updateProgress();
+      updateInsights();
+      renderActivityFeed();
+    }
+
+    // Update key metrics with real data
+    function updateMetrics() {
+      const summary = activityData.summary;
+      
+      document.getElementById('totalLikesGiven').textContent = summary.likesGiven || 0;
+      document.getElementById('totalComments').textContent = summary.comments || 0;
+      document.getElementById('postsShared').textContent = summary.postsShared || 0;
+      document.getElementById('postsSaved').textContent = summary.postsSaved || 0;
+      document.getElementById('engagementScore').textContent = Math.round(summary.engagementScore || 0);
+      document.getElementById('streakDays').textContent = activityData.streak || 0;
+    }
+
+    // Update progress bars with real data
+    function updateProgress() {
+      const summary = activityData.summary;
+      
+      updateProgressBar('commenterProgress', 'commenterBar', summary.comments || 0, 50);
+      updateProgressBar('storytellerProgress', 'storytellerBar', summary.postsShared || 0, 10);
+      updateProgressBar('seekerProgress', 'seekerBar', summary.postsSaved || 0, 25);
+      updateProgressBar('supporterProgress', 'supporterBar', summary.likesGiven || 0, 100);
+    }
+
+    function updateProgressBar(labelId, barId, current, target) {
+      const percentage = Math.min((current / target) * 100, 100);
+      document.getElementById(labelId).textContent = `${current}/${target}`;
+      document.getElementById(barId).style.width = `${percentage}%`;
+    }
+
+    // Update insights with real data analysis
+    function updateInsights() {
+      const { topInterests } = activityData.stats;
+      const summary = activityData.summary;
+      
+      // Top Interest
+      if (topInterests && topInterests.length > 0) {
+        const top = topInterests[0]._id;
+        document.getElementById('topInterest').textContent = 
+          `Based on your activity, you're most interested in ${top.role || 'Software Engineering'} roles at ${top.company || 'tech companies'}.`;
+      } else {
+        document.getElementById('topInterest').textContent = 
+          'Start interacting with posts to discover your interests!';
+      }
+      
+      // Activity Trend
+      const totalActivity = (summary.likesGiven || 0) + (summary.comments || 0) + (summary.postsShared || 0);
+      if (totalActivity > 0) {
+        document.getElementById('activityTrend').textContent = 
+          `You've been actively engaging with the community! Total interactions: ${totalActivity}`;
+      } else {
+        document.getElementById('activityTrend').textContent = 
+          'Start engaging with posts to see your activity trends!';
+      }
+      
+      // Next Milestone
+      const nextMilestones = [];
+      if ((summary.comments || 0) < 50) nextMilestones.push(`${50 - (summary.comments || 0)} comments for Community Helper badge`);
+      if ((summary.postsShared || 0) < 10) nextMilestones.push(`${10 - (summary.postsShared || 0)} posts for Story Teller badge`);
+      if ((summary.postsSaved || 0) < 25) nextMilestones.push(`${25 - (summary.postsSaved || 0)} saves for Knowledge Seeker badge`);
+      
+      if (nextMilestones.length > 0) {
+        document.getElementById('nextMilestone').textContent = 
+          `You're ${nextMilestones[0]} away!`;
+      } else {
+        document.getElementById('nextMilestone').textContent = 
+          'Congratulations! You\'ve achieved all current milestones! 🎉';
+      }
+    }
+
+    // Render real activity feed
+    function renderActivityFeed(filter = 'all') {
+      const feed = document.getElementById('activityFeed');
+      const timeline = activityData.timeline;
+      
+      if (!timeline || timeline.length === 0) {
+        feed.innerHTML = '<div class="no-data">No activity yet. Start engaging with posts to see your activity timeline!</div>';
+        return;
+      }
+      
+      const filtered = filter === 'all' ? timeline : timeline.filter(activity => activity.type === filter);
+      
+      if (filtered.length === 0) {
+        feed.innerHTML = '<div class="no-data">No activity found for this filter.</div>';
+        return;
+      }
+      
+      feed.innerHTML = filtered.map(activity => {
+        const post = activity.postId || {};
+        const description = generateActivityDescription(activity, post);
+        
+        return `
+          <div class="activity-item">
+            <div class="activity-icon ${activity.type}">
+              ${getActivityIcon(activity.type)}
+            </div>
+            <div class="activity-content">
+              <div class="activity-description">${description}</div>
+              <div class="activity-meta">${activity.postDetails?.company || post.company || 'Unknown Company'} • ${activity.postDetails?.role || post.role || 'Unknown Role'}</div>
+            </div>
+            <div class="activity-time">${formatTimeAgo(new Date(activity.timestamp))}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function generateActivityDescription(activity, post) {
+      const company = activity.postDetails?.company || post.company || 'a company';
+      const role = activity.postDetails?.role || post.role || 'a role';
+      
+      switch (activity.type) {
+        case 'like':
+          return `Liked a post about ${role} at ${company}`;
+        case 'comment':
+          const commentText = activity.metadata?.comment || '';
+          const preview = commentText.length > 50 ? commentText.substring(0, 50) + '...' : commentText;
+          return `Commented: "${preview}" on ${role} at ${company}`;
+        case 'post':
+          return `Shared your ${role} interview experience at ${company}`;
+        case 'save':
+          return `Saved a ${role} interview experience from ${company}`;
+        case 'view':
+          return `Viewed ${role} interview experience at ${company}`;
+        default:
+          return `Interacted with a post about ${role} at ${company}`;
+      }
+    }
+
+    function getActivityIcon(type) {
+      const icons = {
+        like: '👍',
+        comment: '💬',
+        post: '📝',
+        save: '💾',
+        view: '👀'
+      };
+      return icons[type] || '📊';
+    }
+
+    function formatTimeAgo(date) {
+      const now = new Date();
+      const diffTime = Math.abs(now - date);
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+      const diffMinutes = Math.floor(diffTime / (1000 * 60));
+      
+      if (diffDays > 0) return `${diffDays}d ago`;
+      if (diffHours > 0) return `${diffHours}h ago`;
+      if (diffMinutes > 0) return `${diffMinutes}m ago`;
+      return 'Just now';
+    }
+
+    // Create charts with real data
+    function updateCharts() {
+      createActivityChart();
+      createEngagementChart();
+      createInterestsChart();
+    }
+
+    function createActivityChart() {
+      const canvas = document.getElementById('activityChart');
+      const ctx = canvas.getContext('2d');
+      
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Process daily stats from real data
+      const { dailyStats } = activityData.stats;
+      const last7Days = getLast7Days();
+      const chartData = last7Days.map(date => {
+        const dayData = dailyStats?.find(d => d._id === date);
+        return dayData ? dayData.count : 0;
+      });
+      
+      const labels = last7Days.map(date => {
+        const d = new Date(date);
+        return d.toLocaleDateString('en', { weekday: 'short' });
+      });
+      
+      drawBarChart(ctx, labels, chartData, canvas.width, canvas.height, '#ff5e57');
+    }
+
+    function getLast7Days() {
+      const days = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        days.push(date.toISOString().split('T')[0]);
+      }
+      return days;
+    }
+
+    function createEngagementChart() {
+      const canvas = document.getElementById('engagementChart');
+      const ctx = canvas.getContext('2d');
+      
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      const summary = activityData.summary;
+      const data = [
+        { label: 'Likes', value: summary.likesGiven || 0, color: '#ff5e57' },
+        { label: 'Comments', value: summary.comments || 0, color: '#ff9f1c' },
+        { label: 'Posts', value: summary.postsShared || 0, color: '#ffa726' },
+        { label: 'Saves', value: summary.postsSaved || 0, color: '#ffb74d' }
+      ];
+      
+      drawPieChart(ctx, data, canvas.width, canvas.height);
+    }
+
+    function createInterestsChart() {
+      const canvas = document.getElementById('interestsChart');
+      const ctx = canvas.getContext('2d');
+      
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      const { topInterests } = activityData.stats;
+      
+      if (!topInterests || topInterests.length === 0) {
+        // Show "no data" message
+        ctx.fillStyle = '#666';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('No interest data yet', canvas.width / 2, canvas.height / 2);
+        ctx.fillText('Start interacting with posts!', canvas.width / 2, canvas.height / 2 + 25);
+        return;
+      }
+      
+      const companies = topInterests.slice(0, 5).map(item => 
+        `${item._id.company || 'Unknown'} (${item._id.role || 'Various roles'})`
+      );
+      const counts = topInterests.slice(0, 5).map(item => item.count);
+      
+      drawBarChart(ctx, companies, counts, canvas.width, canvas.height, '#f89c1b');
+    }
+
+    function drawBarChart(ctx, labels, data, width, height, color) {
+      const padding = 60;
+      const chartWidth = width - 2 * padding;
+      const chartHeight = height - 2 * padding;
+      const barWidth = chartWidth / labels.length;
+      const maxValue = Math.max(...data, 1); // Ensure minimum of 1 to avoid division by 0
+      
+      // Draw axes
+      ctx.strokeStyle = '#ddd';
+      ctx.lineWidth = 1;
+      
+      // Y-axis
+      ctx.beginPath();
+      ctx.moveTo(padding, padding);
+      ctx.lineTo(padding, height - padding);
+      ctx.stroke();
+      
+      // X-axis
+      ctx.beginPath();
+      ctx.moveTo(padding, height - padding);
+      ctx.lineTo(width - padding, height - padding);
+      ctx.stroke();
+      
+      // Draw bars
+      data.forEach((value, index) => {
+        const barHeight = (value / maxValue) * chartHeight;
+        const x = padding + index * barWidth + barWidth * 0.2;
+        const y = height - padding - barHeight;
+        const barActualWidth = barWidth * 0.6;
+        
+        // Bar
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y, barActualWidth, barHeight);
+        
+        // Value labels
+        if (value > 0) {
+          ctx.fillStyle = '#333';
+          ctx.font = '12px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText(value.toString(), x + barActualWidth / 2, y - 5);
+        }
+      });
+      
+      // X-axis labels
+      ctx.fillStyle = '#666';
+      ctx.font = '11px Arial';
+      ctx.textAlign = 'center';
+      labels.forEach((label, index) => {
+        const x = padding + index * barWidth + barWidth * 0.5;
+        const words = label.split(' ');
+        words.forEach((word, wordIndex) => {
+          ctx.fillText(word, x, height - padding + 15 + (wordIndex * 12));
+        });
+      });
+    }
+
+    function drawPieChart(ctx, data, width, height) {
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const radius = Math.min(width, height) / 3;
+      
+      const total = data.reduce((sum, item) => sum + item.value, 0);
+      
+      if (total === 0) {
+        // Show "no data" message
+        ctx.fillStyle = '#666';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('No activity data yet', centerX, centerY);
+        return;
+      }
+      
+      let currentAngle = -Math.PI / 2;
+      
+      data.forEach(item => {
+        if (item.value > 0) {
+          const sliceAngle = (item.value / total) * 2 * Math.PI;
+          
+          // Draw slice
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
+          ctx.lineTo(centerX, centerY);
+          ctx.fillStyle = item.color;
+          ctx.fill();
+          
+          // Draw labels for significant slices
+          if (item.value / total > 0.05) { // Only show labels for slices > 5%
+            const labelAngle = currentAngle + sliceAngle / 2;
+            const labelX = centerX + Math.cos(labelAngle) * (radius + 25);
+            const labelY = centerY + Math.sin(labelAngle) * (radius + 25);
+            
+            ctx.fillStyle = '#333';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${item.label}: ${item.value}`, labelX, labelY);
+          }
+          
+          currentAngle += sliceAngle;
+        }
+      });
+    }
+
+    // Tab filtering functionality
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderActivityFeed(btn.dataset.filter);
+      });
+    });
+
+    // User dropdown functionality
+    const userIcon = document.getElementById('userIcon');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+    const loginLink = document.getElementById('loginLink');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    if (currentUser) {
+      loginLink.style.display = 'none';
+      userIcon.style.display = 'flex';
+      const displayLetter = currentUser.name 
+        ? currentUser.name.charAt(0).toUpperCase()
+        : currentUser.email.charAt(0).toUpperCase();
+      userIcon.textContent = displayLetter;
+    }
+
+    userIcon.addEventListener('click', () => {
+      dropdownMenu.classList.toggle('show');
+    });
+
+    window.addEventListener('click', (event) => {
+      if (!event.target.closest('.user-icon') && !event.target.closest('.dropdown')) {
+        dropdownMenu.classList.remove('show');
+      }
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      localStorage.clear();
+      alert('Logged out successfully!');
+      window.location.href = 'index.html';
+    });
+
+    // Auto-refresh data every 5 minutes
+    setInterval(loadRealActivityData, 5 * 60 * 1000);
+
+    // Initialize the page
+    loadRealActivityData();
+  </script>
+</body>
+</html>
