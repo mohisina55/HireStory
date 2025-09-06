@@ -52,8 +52,34 @@ async function loadExperience() {
     comments = post.comments || [];
     renderComments();
 
+    // Check if post is already saved
+    await checkIfPostSaved();
+
   } catch (err) {
     document.body.innerHTML = `<p>❌ Failed to load experience: ${err.message}</p>`;
+  }
+}
+
+// Check if current post is saved by user
+async function checkIfPostSaved() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) return;
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/saved-posts/${user.email}`);
+    if (res.ok) {
+      const savedPosts = await res.json();
+      const isAlreadySaved = savedPosts.some(savedPost => savedPost._id === post._id);
+      
+      const saveBtn = document.getElementById("saveBtn");
+      if (isAlreadySaved) {
+        saveBtn.textContent = "📌 Saved";
+        saveBtn.disabled = true;
+        saveBtn.style.opacity = "0.6";
+      }
+    }
+  } catch (err) {
+    console.error("Error checking saved status:", err);
   }
 }
 
@@ -82,32 +108,41 @@ document.getElementById("likeBtn").addEventListener("click", async () => {
   }
 });
 
-// Save button
-// Save button (user-specific)
-document.getElementById("saveBtn").addEventListener("click", () => {
+// Updated Save button with backend integration
+document.getElementById("saveBtn").addEventListener("click", async () => {
   const currentUser = JSON.parse(localStorage.getItem("user"));
   if (!currentUser) {
     alert("Please login to save posts.");
     return;
   }
 
-  const userEmail = currentUser.email;
+  const saveBtn = document.getElementById("saveBtn");
+  
+  try {
+    const res = await fetch("http://localhost:5000/api/saved-posts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userEmail: currentUser.email,
+        postId: post._id
+      })
+    });
 
-  // Get saved posts for this user
-  const allSavedPosts = JSON.parse(localStorage.getItem("savedPosts") || "{}");
-  const userSaved = allSavedPosts[userEmail] || [];
+    const result = await res.json();
 
-  // Check if post already saved
-  if (!userSaved.some(p => p._id === post._id)) {
-    userSaved.push(post);
-    allSavedPosts[userEmail] = userSaved; // update user-specific posts
-    localStorage.setItem("savedPosts", JSON.stringify(allSavedPosts));
-    alert("Post saved!");
-  } else {
-    alert("Post already saved.");
+    if (res.ok) {
+      alert("Post saved successfully!");
+      saveBtn.textContent = "📌 Saved";
+      saveBtn.disabled = true;
+      saveBtn.style.opacity = "0.6";
+    } else {
+      alert(result.message || "Failed to save post");
+    }
+  } catch (err) {
+    console.error("❌ Error saving post:", err);
+    alert("Error saving post. Please try again.");
   }
 });
-
 
 // Add comment
 document.getElementById("addCommentBtn").addEventListener("click", async () => {
