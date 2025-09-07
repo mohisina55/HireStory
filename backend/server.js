@@ -1,3 +1,6 @@
+// SERVER.JS SETUP GUIDE
+// Replace your existing server.js with this complete version
+
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
@@ -6,9 +9,11 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
+
+// Import Models
 const User = require("./models/User");
 const Experience = require("./models/Experience");
-const UserActivity = require("./models/UserActivity");
+const UserActivity = require("./models/UserActivity"); // ADD THIS IMPORT
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -25,7 +30,35 @@ mongoose.connect("mongodb+srv://user1:Aomxnbauaskldcm@cluster1.alcgag4.mongodb.n
   .then(() => console.log("✅ Connected to MongoDB"))
   .catch((err) => console.error("❌ MongoDB Error:", err));
 
-// ================== Auth Routes ==================
+// ================== Helper Functions ==================
+
+// Helper function to safely track activity
+async function trackUserActivity(userEmail, type, postId, postDetails, metadata = {}) {
+  try {
+    if (!userEmail || !UserActivity) return;
+    
+    const user = await User.findOne({ email: userEmail });
+    if (!user) return;
+
+    const activity = new UserActivity({
+      userId: user._id,
+      userEmail: userEmail,
+      type: type,
+      postId: postId,
+      postDetails: postDetails,
+      metadata: metadata,
+      timestamp: new Date()
+    });
+
+    await activity.save();
+    console.log(`✅ Activity tracked: ${type} by ${userEmail}`);
+  } catch (err) {
+    console.warn(`⚠️ Activity tracking failed for ${type}:`, err.message);
+    // Don't throw error - let the main operation continue
+  }
+}
+
+// ================== AUTH ROUTES ==================
 
 // REGISTER
 app.post("/api/register", async (req, res) => {
@@ -119,119 +152,9 @@ app.post("/api/reset-password", async (req, res) => {
   }
 });
 
-// ================== SAVED POSTS ROUTES ==================
-
-// Save a post (with activity tracking)
-app.post("/api/saved-posts", async (req, res) => {
-  try {
-    const { userEmail, postId } = req.body;
-    
-    if (!userEmail || !postId) {
-      return res.status(400).json({ message: "User email and post ID are required" });
-    }
-
-    // Find user by email
-    const user = await User.findOne({ email: userEmail });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Check if post exists
-    const post = await Experience.findById(postId);
-    if (!post) {
-      return res.status(404).json({ message: "Post not found" });
-    }
-
-    // Check if post is already saved
-    if (user.savedPosts && user.savedPosts.includes(postId)) {
-      return res.status(400).json({ message: "Post already saved" });
-    }
-
-    // Initialize savedPosts array if it doesn't exist
-    if (!user.savedPosts) {
-      user.savedPosts = [];
-    }
-
-    // Add post to saved posts
-    user.savedPosts.push(postId);
-    await user.save();
-
-    // Track save activity
-    const activity = new UserActivity({
-      userId: user._id,
-      userEmail: userEmail,
-      type: 'save',
-      postId: postId,
-      postDetails: {
-        company: post.company,
-        role: post.role,
-        difficulty: post.difficulty,
-        title: `${post.role} @ ${post.company}`
-      },
-      timestamp: new Date()
-    });
-    await activity.save().catch(err => console.error("Error tracking save activity:", err));
-
-    res.status(200).json({ message: "Post saved successfully" });
-  } catch (err) {
-    console.error("Error saving post:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-// Get user's saved posts (unchanged)
-app.get("/api/saved-posts/:userEmail", async (req, res) => {
-  try {
-    const { userEmail } = req.params;
-
-    const user = await User.findOne({ email: userEmail }).populate('savedPosts');
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Return saved posts or empty array if none exist
-    res.json(user.savedPosts || []);
-  } catch (err) {
-    console.error("Error fetching saved posts:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-// Remove a saved post (no activity tracking needed for unsave)
-app.delete("/api/saved-posts", async (req, res) => {
-  try {
-    const { userEmail, postId } = req.body;
-    
-    if (!userEmail || !postId) {
-      return res.status(400).json({ message: "User email and post ID are required" });
-    }
-
-    const user = await User.findOne({ email: userEmail });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Initialize savedPosts array if it doesn't exist
-    if (!user.savedPosts) {
-      user.savedPosts = [];
-    }
-
-    // Remove post from saved posts
-    user.savedPosts = user.savedPosts.filter(id => id.toString() !== postId);
-    await user.save();
-
-    res.json({ message: "Post removed from saved posts" });
-  } catch (err) {
-    console.error("Error removing saved post:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
 // ================== EXPERIENCE ROUTES ==================
 
-// ================== EXPERIENCE ROUTES WITH ACTIVITY TRACKING ==================
-
-// CREATE: Post new experience (with activity tracking)
+// CREATE: Post new experience
 app.post("/api/experience", async (req, res) => {
   try {
     const { name, email, company, role, difficulty, experienceText, tags = [], resources = [] } = req.body;
@@ -240,33 +163,22 @@ app.post("/api/experience", async (req, res) => {
 
     // Track the post activity
     if (email) {
-      const user = await User.findOne({ email: email });
-      if (user) {
-        const activity = new UserActivity({
-          userId: user._id,
-          userEmail: email,
-          type: 'post',
-          postId: newExp._id,
-          postDetails: {
-            company: company,
-            role: role,
-            difficulty: difficulty,
-            title: `${role} @ ${company}`
-          },
-          timestamp: new Date()
-        });
-        await activity.save().catch(err => console.error("Error tracking post activity:", err));
-      }
+      await trackUserActivity(email, 'post', newExp._id, {
+        company: company,
+        role: role,
+        difficulty: difficulty,
+        title: `${role} @ ${company}`
+      });
     }
 
-    res.status(201).json({ message: "Experience shared successfully" });
+    res.status(201).json({ message: "Experience shared successfully", postId: newExp._id });
   } catch (err) {
     console.error("❌ Error saving experience:", err);
     res.status(500).json({ message: "Failed to share experience" });
   }
 });
 
-// READ: Get all experiences (unchanged)
+// READ: Get all experiences
 app.get("/api/experience", async (req, res) => {
   try {
     const experiences = await Experience.find().sort({ date: -1 });
@@ -277,7 +189,7 @@ app.get("/api/experience", async (req, res) => {
   }
 });
 
-// READ: Get experience by ID (with view tracking)
+// READ: Get experience by ID
 app.get("/api/experience/:id", async (req, res) => {
   try {
     const experience = await Experience.findById(req.params.id);
@@ -286,26 +198,12 @@ app.get("/api/experience/:id", async (req, res) => {
     // Track view activity if user email is provided in query params
     const userEmail = req.query.userEmail;
     if (userEmail) {
-      const user = await User.findOne({ email: userEmail });
-      if (user) {
-        const activity = new UserActivity({
-          userId: user._id,
-          userEmail: userEmail,
-          type: 'view',
-          postId: experience._id,
-          postDetails: {
-            company: experience.company,
-            role: experience.role,
-            difficulty: experience.difficulty,
-            title: `${experience.role} @ ${experience.company}`
-          },
-          metadata: {
-            viewDuration: req.query.duration || null
-          },
-          timestamp: new Date()
-        });
-        await activity.save().catch(err => console.error("Error tracking view activity:", err));
-      }
+      await trackUserActivity(userEmail, 'view', experience._id, {
+        company: experience.company,
+        role: experience.role,
+        difficulty: experience.difficulty,
+        title: `${experience.role} @ ${experience.company}`
+      });
     }
 
     res.json(experience);
@@ -315,97 +213,105 @@ app.get("/api/experience/:id", async (req, res) => {
   }
 });
 
-// UPDATE: Like a post (with activity tracking)
+// UPDATE: Like a post
 app.post("/api/experience/:id/like", async (req, res) => {
   try {
-    const { userEmail } = req.body; // Get user email from request body
+    const { userEmail } = req.body;
     
+    console.log(`📝 Like request received for post ${req.params.id} by user ${userEmail}`);
+    
+    // Validate post exists
     const post = await Experience.findById(req.params.id);
-    if (!post) return res.status(404).json({ message: "Post not found" });
-    
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    // Check if user is provided
+    if (!userEmail) {
+      return res.status(400).json({ message: "User email is required" });
+    }
+
+    // Increment likes
     post.likes = (post.likes || 0) + 1;
     await post.save();
 
-    // Try to track like activity (but don't fail if it doesn't work)
-    if (userEmail) {
-      try {
-        const user = await User.findOne({ email: userEmail });
-        if (user && UserActivity) {
-          const activity = new UserActivity({
-            userId: user._id,
-            userEmail: userEmail,
-            type: 'like',
-            postId: post._id,
-            postDetails: {
-              company: post.company,
-              role: post.role,
-              difficulty: post.difficulty,
-              title: `${post.role} @ ${post.company}`
-            },
-            timestamp: new Date()
-          });
-          await activity.save();
-        }
-      } catch (activityErr) {
-        console.warn("Activity tracking failed for like:", activityErr);
-        // Don't fail the like operation if activity tracking fails
-      }
-    }
+    // Track like activity
+    await trackUserActivity(userEmail, 'like', post._id, {
+      company: post.company,
+      role: post.role,
+      difficulty: post.difficulty,
+      title: `${post.role} @ ${post.company}`
+    });
 
-    res.json({ likes: post.likes });
+    console.log(`✅ Post liked by ${userEmail}. Total likes: ${post.likes}`);
+    res.json({ 
+      likes: post.likes,
+      message: "Post liked successfully" 
+    });
+
   } catch (err) {
     console.error("❌ Error liking post:", err);
-    res.status(500).json({ message: "Failed to like post" });
+    res.status(500).json({ 
+      message: "Failed to like post",
+      error: err.message 
+    });
   }
 });
 
-// UPDATE: Comment on a post (with activity tracking)
+// UPDATE: Comment on a post
 app.post("/api/experience/:id/comment", async (req, res) => {
-  const { user, text } = req.body;
-  if (!user || !text) return res.status(400).json({ message: "Invalid comment data" });
-  
   try {
-    const post = await Experience.findById(req.params.id);
-    if (!post) return res.status(404).json({ message: "Post not found" });
+    const { user, text } = req.body;
     
-    post.comments.push({ user, text });
-    await post.save();
-
-    // Try to track comment activity (but don't fail if it doesn't work)
-    try {
-      const userDoc = await User.findOne({ email: user });
-      if (userDoc && UserActivity) {
-        const activity = new UserActivity({
-          userId: userDoc._id,
-          userEmail: user,
-          type: 'comment',
-          postId: post._id,
-          postDetails: {
-            company: post.company,
-            role: post.role,
-            difficulty: post.difficulty,
-            title: `${post.role} @ ${post.company}`
-          },
-          metadata: {
-            comment: text.substring(0, 200) // Store first 200 chars of comment
-          },
-          timestamp: new Date()
-        });
-        await activity.save();
-      }
-    } catch (activityErr) {
-      console.warn("Activity tracking failed for comment:", activityErr);
-      // Don't fail the comment operation if activity tracking fails
+    console.log(`📝 Comment request received for post ${req.params.id} by user ${user}`);
+    
+    // Validate input
+    if (!user || !text) {
+      return res.status(400).json({ message: "User and comment text are required" });
     }
 
-    res.json({ comments: post.comments });
+    // Validate post exists
+    const post = await Experience.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    // Add comment
+    const newComment = {
+      user: user,
+      text: text,
+      date: new Date()
+    };
+    
+    post.comments.push(newComment);
+    await post.save();
+
+    // Track comment activity
+    await trackUserActivity(user, 'comment', post._id, {
+      company: post.company,
+      role: post.role,
+      difficulty: post.difficulty,
+      title: `${post.role} @ ${post.company}`
+    }, {
+      comment: text.substring(0, 200)
+    });
+
+    console.log(`✅ Comment added by ${user}. Total comments: ${post.comments.length}`);
+    res.json({ 
+      comments: post.comments,
+      message: "Comment added successfully"
+    });
+
   } catch (err) {
-    console.error("❌ Error commenting post:", err);
-    res.status(500).json({ message: "Failed to add comment" });
+    console.error("❌ Error adding comment:", err);
+    res.status(500).json({ 
+      message: "Failed to add comment",
+      error: err.message 
+    });
   }
 });
 
-// UPDATE: Update experience by ID (unchanged)
+// UPDATE: Update experience by ID
 app.put("/api/experience/:id", async (req, res) => {
   try {
     const postId = req.params.id;
@@ -428,7 +334,7 @@ app.put("/api/experience/:id", async (req, res) => {
   }
 });
 
-// DELETE: Delete experience by ID (unchanged)
+// DELETE: Delete experience by ID
 app.delete("/api/experience/:id", async (req, res) => {
   try {
     const postId = req.params.id;
@@ -445,55 +351,118 @@ app.delete("/api/experience/:id", async (req, res) => {
     res.status(500).json({ message: "Failed to delete post" });
   }
 });
-// START SERVER
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
-// Add these routes to your server.js file (after the saved posts routes)
 
-// ================== ACTIVITY TRACKING ROUTES ==================
+// ================== SAVED POSTS ROUTES ==================
 
-// Track user activity (called when user performs an action)
-app.post("/api/activity/track", async (req, res) => {
+// Save a post
+app.post("/api/saved-posts", async (req, res) => {
   try {
-    const { userEmail, type, postId, metadata = {} } = req.body;
+    const { userEmail, postId } = req.body;
     
-    if (!userEmail || !type || !postId) {
-      return res.status(400).json({ message: "Missing required fields" });
+    if (!userEmail || !postId) {
+      return res.status(400).json({ message: "User email and post ID are required" });
     }
 
-    // Find user
     const user = await User.findOne({ email: userEmail });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Get post details
     const post = await Experience.findById(postId);
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    // Create activity record
-    const activity = new UserActivity({
-      userId: user._id,
-      userEmail: userEmail,
-      type: type,
-      postId: postId,
-      postDetails: {
-        company: post.company,
-        role: post.role,
-        difficulty: post.difficulty,
-        title: `${post.role} @ ${post.company}`
-      },
-      metadata: metadata,
-      timestamp: new Date()
+    if (!user.savedPosts) {
+      user.savedPosts = [];
+    }
+
+    if (user.savedPosts.includes(postId)) {
+      return res.status(400).json({ message: "Post already saved" });
+    }
+
+    user.savedPosts.push(postId);
+    await user.save();
+
+    // Track save activity
+    await trackUserActivity(userEmail, 'save', postId, {
+      company: post.company,
+      role: post.role,
+      difficulty: post.difficulty,
+      title: `${post.role} @ ${post.company}`
     });
 
-    await activity.save();
-    res.status(201).json({ message: "Activity tracked successfully" });
+    res.status(200).json({ message: "Post saved successfully" });
   } catch (err) {
-    console.error("Error tracking activity:", err);
+    console.error("Error saving post:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Get user's saved posts
+app.get("/api/saved-posts/:userEmail", async (req, res) => {
+  try {
+    const { userEmail } = req.params;
+
+    const user = await User.findOne({ email: userEmail }).populate('savedPosts');
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user.savedPosts || []);
+  } catch (err) {
+    console.error("Error fetching saved posts:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Remove a saved post
+app.delete("/api/saved-posts", async (req, res) => {
+  try {
+    const { userEmail, postId } = req.body;
+    
+    if (!userEmail || !postId) {
+      return res.status(400).json({ message: "User email and post ID are required" });
+    }
+
+    const user = await User.findOne({ email: userEmail });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!user.savedPosts) {
+      user.savedPosts = [];
+    }
+
+    user.savedPosts = user.savedPosts.filter(id => id.toString() !== postId);
+    await user.save();
+
+    res.json({ message: "Post removed from saved posts" });
+  } catch (err) {
+    console.error("Error removing saved post:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// ================== ACTIVITY ROUTES ==================
+
+// Get user by email
+app.get("/api/user/by-email/:email", async (req, res) => {
+  try {
+    const { email } = req.params;
+    const user = await User.findOne({ email: email });
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
+    res.json({
+      _id: user._id,
+      email: user.email,
+      role: user.role
+    });
+  } catch (err) {
+    console.error("Error finding user:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -503,10 +472,20 @@ app.get("/api/activity/summary/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
 
-    // Get all user activities
+    if (!UserActivity) {
+      return res.json({
+        likesGiven: 0,
+        comments: 0,
+        postsShared: 0,
+        postsSaved: 0,
+        postsViewed: 0,
+        totalActivities: 0,
+        engagementScore: 0
+      });
+    }
+
     const activities = await UserActivity.find({ userId: userId });
     
-    // Count different types of activities
     const summary = {
       likesGiven: activities.filter(a => a.type === 'like').length,
       comments: activities.filter(a => a.type === 'comment').length,
@@ -517,13 +496,12 @@ app.get("/api/activity/summary/:userId", async (req, res) => {
       engagementScore: 0
     };
 
-    // Calculate engagement score (weighted scoring)
     summary.engagementScore = (
-      (summary.postsShared * 10) +     // Sharing is most valuable
-      (summary.comments * 5) +         // Comments show engagement
-      (summary.likesGiven * 2) +       // Likes show appreciation
-      (summary.postsSaved * 3) +       // Saves show value recognition
-      (summary.postsViewed * 1)        // Views show interest
+      (summary.postsShared * 10) +
+      (summary.comments * 5) +
+      (summary.likesGiven * 2) +
+      (summary.postsSaved * 3) +
+      (summary.postsViewed * 1)
     );
 
     res.json(summary);
@@ -538,6 +516,10 @@ app.get("/api/activity/timeline/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
     const days = parseInt(req.query.days) || 30;
+
+    if (!UserActivity) {
+      return res.json([]);
+    }
 
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
@@ -556,18 +538,28 @@ app.get("/api/activity/timeline/:userId", async (req, res) => {
   }
 });
 
-// Get user activity stats (for charts)
+// Get user activity stats
 app.get("/api/activity/stats/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
+    
+    if (!UserActivity) {
+      return res.json({
+        dailyStats: [],
+        topInterests: [],
+        typeBreakdown: []
+      });
+    }
+
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    // Daily activity stats for charts
+    const objectId = new mongoose.Types.ObjectId(userId);
+
     const dailyStats = await UserActivity.aggregate([
       { 
         $match: { 
-          userId: new mongoose.Types.ObjectId(userId), 
+          userId: objectId, 
           timestamp: { $gte: thirtyDaysAgo } 
         } 
       },
@@ -579,16 +571,14 @@ app.get("/api/activity/stats/:userId", async (req, res) => {
               date: "$timestamp"
             }
           },
-          count: { $sum: 1 },
-          types: { $push: "$type" }
+          count: { $sum: 1 }
         }
       },
       { $sort: { _id: 1 } }
     ]);
 
-    // Top interests (companies and roles user interacts with most)
     const topInterests = await UserActivity.aggregate([
-      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+      { $match: { userId: objectId } },
       { $match: { "postDetails.company": { $exists: true } } },
       {
         $group: {
@@ -604,9 +594,8 @@ app.get("/api/activity/stats/:userId", async (req, res) => {
       { $limit: 10 }
     ]);
 
-    // Activity type breakdown
     const typeBreakdown = await UserActivity.aggregate([
-      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+      { $match: { userId: objectId } },
       {
         $group: {
           _id: "$type",
@@ -631,14 +620,19 @@ app.get("/api/activity/streak/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
     
-    // Get activities from last 30 days, grouped by date
+    if (!UserActivity) {
+      return res.json({ streak: 0, activeDates: 0 });
+    }
+
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const objectId = new mongoose.Types.ObjectId(userId);
 
     const dailyActivity = await UserActivity.aggregate([
       { 
         $match: { 
-          userId: new mongoose.Types.ObjectId(userId),
+          userId: objectId,
           timestamp: { $gte: thirtyDaysAgo }
         } 
       },
@@ -656,21 +650,17 @@ app.get("/api/activity/streak/:userId", async (req, res) => {
       { $sort: { _id: -1 } }
     ]);
 
-    // Calculate streak
     let streak = 0;
-    const today = new Date().toISOString().split('T')[0];
+    const activeDates = dailyActivity.map(d => d._id);
     let currentDate = new Date();
 
-    // Check if user was active today or yesterday (to account for timezone)
-    const activeDates = dailyActivity.map(d => d._id);
-    
     for (let i = 0; i < 30; i++) {
       const dateStr = currentDate.toISOString().split('T')[0];
       
       if (activeDates.includes(dateStr)) {
         streak++;
       } else {
-        break; // Streak broken
+        break;
       }
       
       currentDate.setDate(currentDate.getDate() - 1);
@@ -683,44 +673,13 @@ app.get("/api/activity/streak/:userId", async (req, res) => {
   }
 });
 
-// Get leaderboard (optional - for community features)
-app.get("/api/activity/leaderboard", async (req, res) => {
-  try {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+// ROOT
+app.get("/", (req, res) => {
+  res.send("✅ HireStory Backend API is running with Activity Tracking.");
+});
 
-    const leaderboard = await UserActivity.aggregate([
-      { $match: { timestamp: { $gte: thirtyDaysAgo } } },
-      {
-        $group: {
-          _id: "$userId",
-          userEmail: { $first: "$userEmail" },
-          totalActivities: { $sum: 1 },
-          likes: { $sum: { $cond: [{ $eq: ["$type", "like"] }, 1, 0] } },
-          comments: { $sum: { $cond: [{ $eq: ["$type", "comment"] }, 1, 0] } },
-          posts: { $sum: { $cond: [{ $eq: ["$type", "post"] }, 1, 0] } },
-          saves: { $sum: { $cond: [{ $eq: ["$type", "save"] }, 1, 0] } }
-        }
-      },
-      {
-        $addFields: {
-          engagementScore: {
-            $add: [
-              { $multiply: ["$posts", 10] },
-              { $multiply: ["$comments", 5] },
-              { $multiply: ["$saves", 3] },
-              { $multiply: ["$likes", 2] }
-            ]
-          }
-        }
-      },
-      { $sort: { engagementScore: -1 } },
-      { $limit: 10 }
-    ]);
-
-    res.json(leaderboard);
-  } catch (err) {
-    console.error("Error getting leaderboard:", err);
-    res.status(500).json({ message: "Server error" });
-  }
+// START SERVER
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log("📊 Activity tracking enabled");
 });
